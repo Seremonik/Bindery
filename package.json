@@ -1,0 +1,28 @@
+{
+  "name": "com.duzi.bindery",
+  "version": "0.1.0",
+  "displayName": "Bindery",
+  "description": "WPF-style data binding for Unity 6 UI Toolkit. Source-generated bindable ViewModels from R3/UniRx ReactiveProperty fields, plus declarative UXML bindings for string formatting, multi-source values, and button commands - MVVM without the boilerplate.",
+  "unity": "6000.0",
+  "license": "MIT",
+  "author": {
+    "name": "Michal Duziak",
+    "email": "seremonik@gmail.com"
+  },
+  "keywords": [
+    "ui-toolkit",
+    "data-binding",
+    "mvvm",
+    "source-generator",
+    "reactive",
+    "r3",
+    "unirx"
+  ],
+  "samples": [
+    {
+      "displayName": "Binding Demo",
+      "description": "Slider, formatted label, multi-source label, and a ReactiveCommand button wired with Bindery. Requires R3.",
+      "path": "Samples~/BindingDemo"
+    }
+  ]
+}

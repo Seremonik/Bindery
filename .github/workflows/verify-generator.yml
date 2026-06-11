@@ -1,0 +1,55 @@
+# Proves that the committed source generator DLL (Runtime/Analyzers/) is exactly
+# what the source in SourceGenerator~/ produces. The build is deterministic
+# (see PathMap/DebugType in the csproj and global.json for the pinned SDK),
+# so a fresh build must hash identically to the committed binary.
+#
+# NOTE: this file assumes the Bindery folder is the repository root.
+# It does nothing while Bindery still lives as a subfolder of the blog repo.
+
+name: Verify Source Generator
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Hash the committed DLL BEFORE building: the csproj has a post-build
+      # step that overwrites it with the fresh build.
+      - name: Record committed DLL hash
+        run: sha256sum Runtime/Analyzers/BindablePropertyGenerator.dll > committed.sha256
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: SourceGenerator~/global.json
+
+      - name: Build generator from source
+        run: dotnet build "SourceGenerator~/BindablePropertyGenerator.csproj" -c Release
+
+      - name: Verify committed DLL matches the source build
+        run: |
+          built_hash=$(sha256sum "SourceGenerator~/bin/Release/netstandard2.0/BindablePropertyGenerator.dll" | cut -d' ' -f1)
+          committed_hash=$(cut -d' ' -f1 committed.sha256)
+          echo "committed: $committed_hash"
+          echo "built:     $built_hash"
+          if [ "$built_hash" != "$committed_hash" ]; then
+            echo "::error::Committed Runtime/Analyzers/BindablePropertyGenerator.dll does not match a fresh build of SourceGenerator~. Rebuild with 'dotnet build -c Release' (SDK version from global.json) and commit the result."
+            exit 1
+          fi
+          echo "OK: the committed DLL is reproducible from source."
+
+      # Optional, enable once the public repo exists: signed build provenance.
+      # Requires job permissions: id-token: write, attestations: write.
+      # Users can then verify with:
+      #   gh attestation verify Runtime/Analyzers/BindablePropertyGenerator.dll --repo <owner>/Bindery
+      #
+      # - uses: actions/attest-build-provenance@v2
+      #   with:
+      #     subject-path: Runtime/Analyzers/BindablePropertyGenerator.dll

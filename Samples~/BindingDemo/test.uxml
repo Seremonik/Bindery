@@ -1,0 +1,27 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:b="Bindery" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Label name="test-label" text="Value: 42.0">
+        <Bindings>
+            <b:FormatBinding property="text" source="SliderValue" format="Value: {0:F1}" />
+        </Bindings>
+    </ui:Label>
+    <ui:Button name="test-button" text="Reset">
+        <Bindings>
+            <b:ClickBinding property="name" command="ResetCommand" />
+        </Bindings>
+    </ui:Button>
+    <ui:Slider name="test-slider" label="Slider" value="42" high-value="100">
+        <Bindings>
+            <ui:DataBinding property="value" data-source-path="SliderValue" binding-mode="TwoWay" />
+        </Bindings>
+    </ui:Slider>
+    <ui:Label name="multi-label" text="42 / 100">
+        <Bindings>
+            <b:MultiBinding property="text" format="{0:F0} / {1:F0}">
+                <sources>
+                    <b:Source path="SliderValue" />
+                    <b:Source path="MaxValue" />
+                </sources>
+            </b:MultiBinding>
+        </Bindings>
+    </ui:Label>
+</ui:UXML>

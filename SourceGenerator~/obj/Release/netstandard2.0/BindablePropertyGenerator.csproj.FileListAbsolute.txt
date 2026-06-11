@@ -1,0 +1,8 @@
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\bin\Release\netstandard2.0\BindablePropertyGenerator.deps.json
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\bin\Release\netstandard2.0\BindablePropertyGenerator.dll
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\obj\Release\netstandard2.0\BindablePropertyGenerator.csproj.AssemblyReference.cache
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\obj\Release\netstandard2.0\BindablePropertyGenerator.GeneratedMSBuildEditorConfig.editorconfig
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\obj\Release\netstandard2.0\BindablePropertyGenerator.AssemblyInfoInputs.cache
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\obj\Release\netstandard2.0\BindablePropertyGenerator.AssemblyInfo.cs
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\obj\Release\netstandard2.0\BindablePropertyGenerator.csproj.CoreCompileInputs.cache
+D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\obj\Release\netstandard2.0\BindablePropertyGenerator.dll

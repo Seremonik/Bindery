@@ -1,0 +1,4 @@
+# The generator build must be byte-for-byte reproducible across machines.
+# Line endings are compiler input, so force LF for the generator sources
+# regardless of anyone's core.autocrlf setting.
+SourceGenerator~/** text eol=lf

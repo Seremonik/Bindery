@@ -71,6 +71,10 @@ public partial class ClickBinding : CustomBinding
         }
 
         _setup = true;
+
+        // Event-driven from here on — stop the per-frame Update() polling that
+        // was only needed while waiting for a data source.
+        updateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
     private bool Bind(object source)
@@ -121,6 +125,9 @@ public partial class ClickBinding : CustomBinding
     {
         UnityEngine.Debug.LogError(message);
         _failed = true;
+        // A failed binding stays failed until the data source changes — no
+        // point re-running Update every frame just to report Failure again.
+        updateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
     private void Teardown()
@@ -137,6 +144,7 @@ public partial class ClickBinding : CustomBinding
         _canExecuteHandler = null;
         _setup             = false;
         _failed            = false; // a new data source may satisfy the binding
+        updateTrigger      = BindingUpdateTrigger.EveryUpdate; // resume polling for Setup
     }
 }
 

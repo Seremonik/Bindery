@@ -120,6 +120,10 @@ public partial class MultiBinding : CustomBinding
 
         _setup = true;
         ApplyConversion(ds, element);
+
+        // Event-driven from here on — stop the per-frame Update() polling that
+        // was only needed while waiting for a data source.
+        updateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
     // Never throws: this runs inside the data source's propertyChanged event,
@@ -148,6 +152,9 @@ public partial class MultiBinding : CustomBinding
     {
         UnityEngine.Debug.LogError(message);
         _failed = true;
+        // A failed binding stays failed until the data source changes — no
+        // point re-running Update every frame just to report Failure again.
+        updateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
     private void Teardown()
@@ -163,6 +170,7 @@ public partial class MultiBinding : CustomBinding
         _values        = null;
         _setup         = false;
         _failed        = false; // a new data source may satisfy the binding
+        updateTrigger  = BindingUpdateTrigger.EveryUpdate; // resume polling for Setup
     }
 }
 

@@ -20,9 +20,14 @@
   ],
   "samples": [
     {
-      "displayName": "Binding Demo",
+      "displayName": "Binding Demo (R3)",
       "description": "Slider, formatted label, multi-source label, and a ReactiveCommand button wired with Bindery. Requires R3.",
-      "path": "Samples~/BindingDemo"
+      "path": "Samples~/BindingDemo R3"
+    },
+    {
+      "displayName": "Binding Demo (UniRx)",
+      "description": "Slider, formatted label, multi-source label, and a command button (via Action — UniRx's ReactiveCommand is not an ICommand) wired with Bindery. Requires UniRx.",
+      "path": "Samples~/BindingDemo UniRx"
     }
   ]
 }

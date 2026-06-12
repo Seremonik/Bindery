@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = BindablePropertyGenerator
-build_property.ProjectDir = D:\GameDev\Respositories\Unity-Voxel-Engine-Blog-posts\Bindery\SourceGenerator~\
+build_property.ProjectDir = D:\GameDev\Respositories\RobinsonCrusoe\Robinson Crusoe\Assets\Bindery\SourceGenerator~\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false

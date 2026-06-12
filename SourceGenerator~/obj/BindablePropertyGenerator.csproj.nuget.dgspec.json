@@ -1,19 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\GameDev\\Respositories\\Unity-Voxel-Engine-Blog-posts\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj": {}
+    "D:\\GameDev\\Respositories\\RobinsonCrusoe\\Robinson Crusoe\\Assets\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj": {}
   },
   "projects": {
-    "D:\\GameDev\\Respositories\\Unity-Voxel-Engine-Blog-posts\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj": {
+    "D:\\GameDev\\Respositories\\RobinsonCrusoe\\Robinson Crusoe\\Assets\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\GameDev\\Respositories\\Unity-Voxel-Engine-Blog-posts\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj",
+        "projectUniqueName": "D:\\GameDev\\Respositories\\RobinsonCrusoe\\Robinson Crusoe\\Assets\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj",
         "projectName": "BindablePropertyGenerator",
-        "projectPath": "D:\\GameDev\\Respositories\\Unity-Voxel-Engine-Blog-posts\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj",
+        "projectPath": "D:\\GameDev\\Respositories\\RobinsonCrusoe\\Robinson Crusoe\\Assets\\Bindery\\SourceGenerator~\\BindablePropertyGenerator.csproj",
         "packagesPath": "C:\\Users\\Praca\\.nuget\\packages\\",
-        "outputPath": "D:\\GameDev\\Respositories\\Unity-Voxel-Engine-Blog-posts\\Bindery\\SourceGenerator~\\obj\\",
+        "outputPath": "D:\\GameDev\\Respositories\\RobinsonCrusoe\\Robinson Crusoe\\Assets\\Bindery\\SourceGenerator~\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
+          "D:\\GameDev\\Respositories\\RobinsonCrusoe\\Robinson Crusoe\\Assets\\NuGet.Config",
           "C:\\Users\\Praca\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [

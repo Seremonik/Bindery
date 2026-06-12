@@ -112,7 +112,7 @@ public partial class MultiBinding : CustomBinding
             _notifier = notifiable;
             _changeHandler = (_, args) =>
             {
-                if (_sourceNames.Contains(args.propertyName))
+                if (!_failed && _sourceNames.Contains(args.propertyName))
                     ApplyConversion(ds, element);
             };
             notifiable.propertyChanged += _changeHandler;
@@ -122,16 +122,26 @@ public partial class MultiBinding : CustomBinding
         ApplyConversion(ds, element);
     }
 
+    // Never throws: this runs inside the data source's propertyChanged event,
+    // i.e. on the stack of whatever gameplay code changed the value — a bad
+    // format string must fail the binding, not the caller.
     private void ApplyConversion(object ds, VisualElement element)
     {
-        for (int i = 0; i < _getValues.Length; i++)
-            _values[i] = _getValues[i](ds);
+        try
+        {
+            for (int i = 0; i < _getValues.Length; i++)
+                _values[i] = _getValues[i](ds);
 
-        var converted = string.IsNullOrEmpty(format)
-            ? string.Concat(_values)
-            : string.Format(CultureInfo.InvariantCulture, format, _values);
+            var converted = string.IsNullOrEmpty(format)
+                ? string.Concat(_values)
+                : string.Format(CultureInfo.InvariantCulture, format, _values);
 
-        _setValue(element, converted);
+            _setValue(element, converted);
+        }
+        catch (Exception e)
+        {
+            Fail($"MultiBinding on {element.GetType().Name} '{element.name}': applying format '{format}' failed — {e.Message}");
+        }
     }
 
     private void Fail(string message)

@@ -44,6 +44,8 @@
 ExportedObj/
 .consulo/
 *.csproj
+# The source generator's csproj is hand-written, not Unity-generated — keep it
+!SourceGenerator~/*.csproj
 *.unityproj
 *.sln
 *.slnx

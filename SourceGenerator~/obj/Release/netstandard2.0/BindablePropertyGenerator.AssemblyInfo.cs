@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BindablePropertyGenerator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05d19fa5fb32fc081613ce934dd4aad665e30166")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+87c4d8e967499ce45489642b63bfb6bf9248eccf")]
 [assembly: System.Reflection.AssemblyProductAttribute("BindablePropertyGenerator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BindablePropertyGenerator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

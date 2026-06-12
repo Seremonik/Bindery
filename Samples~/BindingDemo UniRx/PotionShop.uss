@@ -1,0 +1,191 @@
+.screen {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(16, 18, 26);
+}
+
+.card {
+    width: 480px;
+    background-color: rgb(31, 35, 48);
+    border-radius: 18px;
+    padding: 28px;
+    border-width: 1px;
+    border-color: rgb(56, 62, 82);
+}
+
+.header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: rgb(238, 240, 248);
+}
+
+.subtitle {
+    font-size: 12px;
+    color: rgb(128, 136, 158);
+    margin-top: 3px;
+}
+
+.gold-chip {
+    background-color: rgb(58, 47, 20);
+    color: rgb(255, 201, 87);
+    -unity-font-style: bold;
+    font-size: 14px;
+    padding: 6px 14px;
+    border-radius: 14px;
+    border-width: 1px;
+    border-color: rgb(110, 88, 38);
+}
+
+.section-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgb(128, 136, 158);
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+}
+
+.health-bar {
+    height: 30px;
+    margin-bottom: 12px;
+}
+
+.health-bar .unity-progress-bar__background {
+    background-color: rgb(16, 18, 26);
+    border-radius: 9px;
+    border-width: 0;
+}
+
+.health-bar .unity-progress-bar__progress {
+    background-color: rgb(96, 196, 116);
+    border-radius: 7px;
+    margin: 2px;
+}
+
+.health-bar .unity-progress-bar__title {
+    color: rgb(238, 240, 248);
+    -unity-font-style: bold;
+    font-size: 12px;
+}
+
+.row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.space-between {
+    justify-content: space-between;
+}
+
+.btn {
+    border-radius: 10px;
+    padding: 10px 16px;
+    border-width: 0;
+    color: rgb(240, 242, 248);
+    -unity-font-style: bold;
+    font-size: 13px;
+    background-color: rgb(70, 78, 100);
+    margin-right: 8px;
+    transition-property: background-color;
+    transition-duration: 0.08s;
+}
+
+.btn:hover {
+    background-color: rgb(86, 95, 120);
+}
+
+.btn:disabled {
+    opacity: 0.35;
+}
+
+.btn-danger {
+    background-color: rgb(178, 70, 70);
+}
+
+.btn-danger:hover {
+    background-color: rgb(198, 86, 86);
+}
+
+.btn-heal {
+    background-color: rgb(58, 142, 86);
+}
+
+.btn-heal:hover {
+    background-color: rgb(70, 160, 100);
+}
+
+.btn-primary {
+    background-color: rgb(86, 110, 214);
+    min-width: 90px;
+    -unity-text-align: middle-center;
+}
+
+.btn-primary:hover {
+    background-color: rgb(102, 126, 230);
+}
+
+.owned {
+    color: rgb(255, 201, 87);
+    -unity-font-style: bold;
+    font-size: 15px;
+    margin-left: auto;
+}
+
+.divider {
+    height: 1px;
+    background-color: rgb(56, 62, 82);
+    margin-top: 18px;
+    margin-bottom: 18px;
+}
+
+.qty-slider {
+    margin-bottom: 10px;
+}
+
+.qty-slider .unity-base-field__label {
+    color: rgb(128, 136, 158);
+    min-width: 80px;
+    font-size: 13px;
+}
+
+.qty-slider .unity-base-slider__tracker {
+    background-color: rgb(16, 18, 26);
+    border-radius: 3px;
+    height: 6px;
+    border-width: 0;
+}
+
+.qty-slider .unity-base-slider__dragger {
+    background-color: rgb(86, 110, 214);
+    border-radius: 8px;
+    width: 16px;
+    height: 16px;
+    border-width: 0;
+}
+
+.qty-slider .unity-base-text-field__input {
+    background-color: rgb(16, 18, 26);
+    border-color: rgb(56, 62, 82);
+    color: rgb(238, 240, 248);
+    border-radius: 6px;
+}
+
+.total {
+    color: rgb(238, 240, 248);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.footnote {
+    font-size: 10px;
+    color: rgb(100, 108, 130);
+    margin-top: 16px;
+    white-space: normal;
+}

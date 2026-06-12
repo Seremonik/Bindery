@@ -1,0 +1,90 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:b="Bindery" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="PotionShop.uss" />
+    <ui:VisualElement name="screen" class="screen">
+        <ui:VisualElement name="card" class="card">
+
+            <ui:VisualElement class="header">
+                <ui:VisualElement>
+                    <ui:Label text="Potion Shop" class="title" />
+                    <ui:Label text="Bindery demo - UniRx" class="subtitle" />
+                </ui:VisualElement>
+                <!-- FormatBinding: single source + format string -->
+                <ui:Label name="gold-label" text="120 g" class="gold-chip">
+                    <Bindings>
+                        <b:FormatBinding property="text" source="Gold" format="{0} g" />
+                    </Bindings>
+                </ui:Label>
+            </ui:VisualElement>
+
+            <ui:Label text="HERO" class="section-label" />
+            <!-- DataBinding (ToTarget) drives the bar fill, MultiBinding renders the title -->
+            <ui:ProgressBar name="health-bar" class="health-bar" low-value="0" high-value="100" value="40" title="HP 40 / 100">
+                <Bindings>
+                    <ui:DataBinding property="value" data-source-path="Health" binding-mode="ToTarget" />
+                    <b:MultiBinding property="title" format="HP {0:F0} / {1:F0}">
+                        <sources>
+                            <b:Source path="Health" />
+                            <b:Source path="MaxHealth" />
+                        </sources>
+                    </b:MultiBinding>
+                </Bindings>
+            </ui:ProgressBar>
+
+            <ui:VisualElement class="row">
+                <!-- ClickBinding, method shape: invokes void TakeDamage() -->
+                <ui:Button name="fight-button" text="Fight a Monster" class="btn btn-danger">
+                    <Bindings>
+                        <b:ClickBinding property="name" command="TakeDamage" />
+                    </Bindings>
+                </ui:Button>
+                <!-- ClickBinding, Action shape: UniRx's ReactiveCommand is not an ICommand,
+                     so the ViewModel exposes an Action that routes to the command. The
+                     CanExecute guard still applies inside Execute(), but the button is
+                     not auto-disabled (that part is R3-only). -->
+                <ui:Button name="drink-button" text="Drink Potion (+30)" class="btn btn-heal">
+                    <Bindings>
+                        <b:ClickBinding property="name" command="Drink" />
+                    </Bindings>
+                </ui:Button>
+                <ui:Label name="owned-label" text="x0" class="owned">
+                    <Bindings>
+                        <b:FormatBinding property="text" source="Owned" format="x{0}" />
+                    </Bindings>
+                </ui:Label>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="divider" />
+
+            <ui:Label text="SHOP - HEALING POTION" class="section-label" />
+            <!-- Built-in DataBinding, TwoWay: slider writes Quantity back to the ViewModel -->
+            <ui:SliderInt name="qty-slider" label="Quantity" low-value="0" high-value="10" value="1" show-input-field="true" class="qty-slider">
+                <Bindings>
+                    <ui:DataBinding property="value" data-source-path="Quantity" binding-mode="TwoWay" />
+                </Bindings>
+            </ui:SliderInt>
+
+            <ui:VisualElement class="row space-between">
+                <!-- MultiBinding with three sources; Total is recomputed by the
+                     generated OnQuantityChanged partial callback in the ViewModel -->
+                <ui:Label name="total-label" text="1 x 25 g = 25 g" class="total">
+                    <Bindings>
+                        <b:MultiBinding property="text" format="{0} x {1} g = {2} g">
+                            <sources>
+                                <b:Source path="Quantity" />
+                                <b:Source path="Price" />
+                                <b:Source path="Total" />
+                            </sources>
+                        </b:MultiBinding>
+                    </Bindings>
+                </ui:Label>
+                <ui:Button name="buy-button" text="Buy" class="btn btn-primary">
+                    <Bindings>
+                        <b:ClickBinding property="name" command="Buy" />
+                    </Bindings>
+                </ui:Button>
+            </ui:VisualElement>
+
+            <ui:Label class="footnote" text="Showcases: TwoWay DataBinding (slider), FormatBinding (gold, owned), MultiBinding (HP title, total), ClickBinding as Action routed to a ReactiveCommand (Buy, Drink) and as void method (Fight), generated OnQuantityChanged callback (total). The PlayerData model is shared with gameplay: GameSimulation's monster attacks on a timer - watch the HP bar drop with no UI code involved. Note: UniRx commands guard internally but do not auto-disable buttons - that requires ICommand, which is R3-only." />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

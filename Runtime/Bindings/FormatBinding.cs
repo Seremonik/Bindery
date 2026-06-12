@@ -84,7 +84,7 @@ public partial class FormatBinding : CustomBinding
             _notifier = notifiable;
             _changeHandler = (_, args) =>
             {
-                if (args.propertyName == source)
+                if (!_failed && args.propertyName == source)
                     ApplyConversion(ds, element);
             };
             notifiable.propertyChanged += _changeHandler;
@@ -94,13 +94,23 @@ public partial class FormatBinding : CustomBinding
         ApplyConversion(ds, element);
     }
 
+    // Never throws: this runs inside the data source's propertyChanged event,
+    // i.e. on the stack of whatever gameplay code changed the value — a bad
+    // format string must fail the binding, not the caller.
     private void ApplyConversion(object ds, VisualElement element)
     {
-        var raw = _getValue(ds);
-        var converted = string.IsNullOrEmpty(format)
-            ? Convert.ToString(raw, CultureInfo.InvariantCulture)
-            : string.Format(CultureInfo.InvariantCulture, format, raw);
-        _setValue(element, converted);
+        try
+        {
+            var raw = _getValue(ds);
+            var converted = string.IsNullOrEmpty(format)
+                ? Convert.ToString(raw, CultureInfo.InvariantCulture)
+                : string.Format(CultureInfo.InvariantCulture, format, raw);
+            _setValue(element, converted);
+        }
+        catch (Exception e)
+        {
+            Fail($"FormatBinding on {element.GetType().Name} '{element.name}': applying format '{format}' to source '{source}' failed — {e.Message}");
+        }
     }
 
     private void Fail(string message)

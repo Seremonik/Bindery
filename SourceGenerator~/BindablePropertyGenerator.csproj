@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <!-- RS2008: analyzer release tracking — not useful for a Unity-distributed generator -->
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
+
+    <!-- Reproducible build: anyone can rebuild this DLL byte-for-byte from source
+         (same SDK version, see global.json) and compare hashes. CI enforces this. -->
+    <Deterministic>true</Deterministic>
+    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Keep the DLL Unity consumes in sync with the source automatically -->
+  <Target Name="CopyToPackage" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildProjectDirectory)\..\Runtime\Analyzers" />
+    <Message Importance="high" Text="Copied $(TargetFileName) to Runtime/Analyzers" />
+  </Target>
+</Project>

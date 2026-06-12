@@ -1,3 +1,5 @@
+![Bindery — reactive MVVM data binding for Unity 6 UI Toolkit](Documentation~/images/banner.png)
+
 # Bindery
 
 **WPF-style data binding for Unity UI Toolkit.**

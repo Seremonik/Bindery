@@ -229,6 +229,11 @@ public class BindablePropertyGenerator : ISourceGenerator
         sb.AppendLine($"    private static bool RegisterPropertyBag_{cn}()");
         sb.AppendLine("    {");
         sb.AppendLine($"        PropertyBag.Register(new {cn}PropertyBag());");
+        sb.AppendLine();
+        sb.AppendLine("        // Compiled getters for Bindery's custom bindings — AOT-safe, so the");
+        sb.AppendLine("        // IL2CPP expression-tree interpreter is never involved on the hot path.");
+        foreach (var p in bagProps)
+            sb.AppendLine($"        global::Bindery.BindingAccessors.RegisterGetter(typeof({cn}), \"{p.PropName}\", static o => (object)(({cn})o).{p.MemberName}.Value);");
         sb.AppendLine("        return true;");
         sb.AppendLine("    }");
         sb.AppendLine();

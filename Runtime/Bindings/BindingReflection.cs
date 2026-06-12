@@ -36,7 +36,11 @@ internal static class BindingReflection
         var key = (dsType, memberName);
         if (GetterCache.TryGetValue(key, out var cached)) return cached;
 
-        var getter = BuildGetterUncached(dsType, memberName);
+        // Generator-registered accessors are plain compiled code — preferred
+        // over expression trees, which run interpreted on IL2CPP.
+        if (!BindingAccessors.TryGetGetter(dsType, memberName, out var getter))
+            getter = BuildGetterUncached(dsType, memberName);
+
         GetterCache[key] = getter;
         return getter;
     }
@@ -88,7 +92,11 @@ internal static class BindingReflection
             return cached.Setter;
         }
 
-        var result = BuildSetterUncached(elementType, propertyName, out propertyType);
+        // Built-in element setters are plain compiled code — preferred over
+        // expression trees, which run interpreted on IL2CPP.
+        if (!BindingAccessors.TryGetSetter(elementType, propertyName, out var result, out propertyType))
+            result = BuildSetterUncached(elementType, propertyName, out propertyType);
+
         SetterCache[key] = (result, propertyType);
         return result;
     }

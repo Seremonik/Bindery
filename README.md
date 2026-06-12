@@ -386,24 +386,24 @@ private void OnDestroy()
 ## Performance
 
 - The generated `ContainerPropertyBag` means Unity's **native** bindings (`ui:DataBinding` and anything else going through `Unity.Properties`) read and write your properties with zero reflection.
-- Bindery's custom bindings (`FormatBinding`, `MultiBinding`, `ClickBinding`) use reflection **once at setup** to locate members, then compile getter and setter delegates via expression trees. Compiled delegates are **cached per (type, member)**, so a list of 1,000 items binding the same property compiles two delegates, not two thousand.
+- The source generator also emits **compiled accessor delegates** for every `[BindableProperty]`, registered in `BindingAccessors`. Bindery's custom bindings use these on the hot path: plain AOT-compiled code, so the IL2CPP expression-tree interpreter is never involved. Members the generator cannot see fall back to reflection once at setup plus cached expression-tree delegates.
 - After setup, Bindery bindings are fully **event-driven**: no per-frame polling.
 
 Measured with the included performance suite as an **IL2CPP standalone player** build (Unity 6, StandaloneWindows64, medians; "manual" is a hand-written `ReactiveProperty.Subscribe` that sets `label.text`, the floor any approach can reach):
 
 | Scenario | Manual | **Bindery `FormatBinding`** | Built-in `ui:DataBinding` |
 |---|---|---|---|
-| 1,000 value changes per frame | 0.94 ms | **3.4 ms** | 3.8 ms |
-| Single change (latency / GC alloc) | 0.73 µs / 40 B | **2.9 µs / 444 B** | n/a |
-| Attach 1,000 bindings (first frame) | n/a | **5.7 ms** | 13.3 ms |
-| 1,000 idle bindings (per frame) | n/a | **0.27 ms** | 0.32 ms |
+| 1,000 value changes per frame | 0.84 ms | **2.3 ms** | 3.9 ms |
+| Single change (latency / GC alloc) | 0.72 µs / 40 B | **1.7 µs / 60 B** | n/a |
+| Attach 1,000 bindings (first frame) | n/a | **4.6 ms** | 15.1 ms |
+| 1,000 idle bindings (per frame) | n/a | **0.30 ms** | 0.28 ms |
 
 Reading the numbers:
 
-- Under change load Bindery is **faster than Unity's built-in `DataBinding`** and about 3.6x a hand-written subscription, the cost of declaring the binding in UXML instead of C#.
-- **Attaching** bindings is markedly faster than built-in DataBinding (the compiled delegate cache means a 1,000-item list compiles two delegates, not two thousand).
+- Under change load Bindery is **over 40% faster than Unity's built-in `DataBinding`** and about 2.4x a hand-written subscription, the cost of declaring the binding in UXML instead of C#.
+- Per change, Bindery allocates **20 B over the unavoidable floor** (the 40 B formatted string): a single boxed value passing through the accessor delegate. There is no expression-interpreter overhead on IL2CPP thanks to the generator-emitted accessors.
+- **Attaching** bindings is roughly 3x faster than built-in DataBinding.
 - Idle cost is negligible and on par with built-in DataBinding. At very large scales, prefer unbinding fully hidden screens.
-- The one cost to be aware of: `FormatBinding`/`MultiBinding` allocate ~444 B per change on IL2CPP (40 B is the formatted string itself; the rest is `Expression`-interpreter overhead on AOT; on Mono JIT it is ~59 B). For change-heavy screens this is the main thing to watch; built-in `ui:DataBinding` through the generated property bag has no such overhead, so use it where you do not need formatting.
 
 **Verified on IL2CPP with Managed Stripping Level set to High: no `link.xml` required.** The generated property bag references every bindable member in typed code, so the IL2CPP stripper keeps them; the reflective `FormatBinding`/`MultiBinding`/`ClickBinding` lookups resolve correctly in AOT players.
 

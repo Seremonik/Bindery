@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using NUnit.Framework;
 using R3;
 using Unity.PerformanceTesting;
+using Unity.Profiling;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -155,23 +157,52 @@ public class BindingPerformanceTests
         driver.Tick = null;
     }
 
-    // GC.GetAllocatedBytesForCurrentThread() is a stub on Unity's Mono (always
-    // returns 0), so measure heap growth instead: force a clean heap, run the
-    // loop, and read the delta before any collection can hide it.
-    private static void MeasureAllocPerChange(Action change)
+    // GC.GetAllocatedBytesForCurrentThread() is a stub on Unity's Mono and
+    // GC.GetTotalMemory is too coarse for small windows, so use the profiler's
+    // per-frame allocation counter instead: run K changes per frame via the
+    // FrameDriver and subtract the allocation baseline of untouched frames.
+    // Works in the editor and in development builds.
+    private IEnumerator MeasureAllocPerChange(Action change, string sampleGroupName)
     {
-        const int n = 1000;
+        const int changesPerFrame = 1000;
+        using var recorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
+        yield return null;
+
+        if (!recorder.Valid)
+        {
+            Debug.LogWarning("GC Allocated In Frame counter unavailable — skipping allocation measurement.");
+            yield break;
+        }
+
         change(); // warm any lazy paths before counting
 
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
-        long before = GC.GetTotalMemory(false);
+        var baseline = new List<long>();
+        for (int i = 0; i < 10; i++)
+        {
+            yield return null;
+            baseline.Add(recorder.LastValue);
+        }
 
-        for (int i = 0; i < n; i++) change();
+        var driver = _go.AddComponent<FrameDriver>();
+        driver.Tick = () => { for (int i = 0; i < changesPerFrame; i++) change(); };
+        var storm = new List<long>();
+        for (int i = 0; i < 15; i++)
+        {
+            yield return null;
+            storm.Add(recorder.LastValue);
+        }
+        driver.Tick = null;
+        UnityEngine.Object.Destroy(driver);
 
-        long delta = GC.GetTotalMemory(false) - before;
-        Measure.Custom(new SampleGroup("GC Alloc per change", SampleUnit.Byte), Math.Max(0, delta) / (double)n);
+        double perChange = (Median(storm) - Median(baseline)) / changesPerFrame;
+        Measure.Custom(new SampleGroup(sampleGroupName, SampleUnit.Byte), Math.Max(0, perChange));
+    }
+
+    private static double Median(List<long> values)
+    {
+        var sorted = values.OrderBy(v => v).ToList();
+        int mid = sorted.Count / 2;
+        return sorted.Count % 2 == 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2.0;
     }
 
     // ------------------------------------------------- idle cost (no changes)
@@ -246,7 +277,7 @@ public class BindingPerformanceTests
         float v = 0f;
         Measure.Method(() => { v += 1f; rps[0].Value = v; })
             .WarmupCount(5).IterationsPerMeasurement(1000).MeasurementCount(15).Run();
-        MeasureAllocPerChange(() => { v += 1f; rps[0].Value = v; });
+        yield return MeasureAllocPerChange(() => { v += 1f; rps[0].Value = v; }, "GC Alloc per change");
     }
 
     [UnityTest, Performance]
@@ -258,7 +289,7 @@ public class BindingPerformanceTests
         float v = 0f;
         Measure.Method(() => { v += 1f; vms[0].Value.Value = v; })
             .WarmupCount(5).IterationsPerMeasurement(1000).MeasurementCount(15).Run();
-        MeasureAllocPerChange(() => { v += 1f; vms[0].Value.Value = v; });
+        yield return MeasureAllocPerChange(() => { v += 1f; vms[0].Value.Value = v; }, "GC Alloc per change");
     }
 
     // ------------------------------ fan-out: one property, many bound elements

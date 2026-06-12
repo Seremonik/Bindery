@@ -71,12 +71,12 @@ Bindery is deliberately a **thin layer over Unity's native binding engine**, not
 ## Features
 
 - **Source-generated ViewModels.** Mark `ReactiveProperty<T>` fields with `[BindableProperty]` and get a `ContainerPropertyBag` plus `propertyChanged` wiring, with no reflection in Unity's native binding path.
-- **R3 and UniRx support.** The generator auto-detects which library your assembly references (R3 wins if both are present). The Bindery runtime itself has zero hard dependency on either.
+- **R3 and UniRx support.** The generator detects the library **per field** from the `ReactiveProperty<T>` type itself, so it picks correctly even when both libraries are present in the project (common when another package pulls in R3 transitively). The Bindery runtime itself has zero hard dependency on either.
 - **`FormatBinding`.** One-way binding from a source member through an optional `string.Format` pattern to any string property, declared in UXML.
 - **`MultiBinding`.** Multiple source members through one format string, like WPF's `MultiBinding` with `StringFormat`.
 - **`ClickBinding`.** Wire a `Button` to an `ICommand` (R3 `ReactiveCommand`), an `Action` property, or a parameterless method. `CanExecute` automatically enables and disables the button.
 - **Generated change hooks.** Optional `partial void On<Name>Changed(T newValue)` callbacks per property.
-- **Compile-time diagnostics.** Clear errors (BG0001 to BG0004) when a class is missing `partial`, the base class, or a reactive library.
+- **Compile-time diagnostics.** Clear errors (BG0001 to BG0005) when a class is missing `partial`, the base class, or a reactive library.
 - **Deterministic disposal.** `BindableObject` implements `IDisposable` and tracks every subscription and `ReactiveProperty` it creates.
 
 ## Requirements
@@ -126,14 +126,14 @@ using Bindery;
 using R3;
 
 [BindableObject]
-public partial class BindingTestData : BindableObject
+public partial class CounterViewModel : BindableObject
 {
     [BindableProperty] public ReactiveProperty<float> SliderValue = new(42f);
     [BindableProperty] public ReactiveProperty<float> MaxValue    = new(60f);
 
     public ReactiveCommand ResetCommand { get; }
 
-    public BindingTestData()
+    public CounterViewModel()
     {
         ResetCommand = SliderValue.Select(v => v > 50f)
                                   .ToReactiveCommand(initialCanExecute: false);
@@ -148,18 +148,18 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 [RequireComponent(typeof(UIDocument))]
-public class BindingTest : MonoBehaviour
+public class CounterView : MonoBehaviour
 {
-    private readonly BindingTestData _data = new();
+    private readonly CounterViewModel _viewModel = new();
 
     private void OnEnable()
     {
-        GetComponent<UIDocument>().rootVisualElement.dataSource = _data;
+        GetComponent<UIDocument>().rootVisualElement.dataSource = _viewModel;
     }
 
     private void OnDestroy()
     {
-        _data.Dispose();
+        _viewModel.Dispose();
     }
 }
 ```
@@ -190,12 +190,22 @@ Drag the slider: the two-way `ui:DataBinding` pushes the value into `SliderValue
 
 Note the namespace declaration `xmlns:b="Bindery"` on the root element; that is what makes the `b:` prefix resolve.
 
+## Samples
+
+Two importable samples ship with the package (Package Manager → Bindery → Samples):
+
+- **Binding Demo (R3)** — a small "Potion Shop" game screen in proper MVVM shape: `PlayerData` (a plain C# model shared between gameplay and UI — a monster attacks the player on a timer and the HP bar simply follows), `PotionShopViewModel`, and a UXML view. Demonstrates every binding type: TwoWay `ui:DataBinding` (quantity slider), `FormatBinding` (gold, owned counters), `MultiBinding` (HP bar title, total price), `ClickBinding` as `ICommand` with CanExecute auto-disable (Buy, Drink) and as a plain method (Fight), plus the generated `OnQuantityChanged` callback recomputing the total.
+- **Binding Demo (UniRx)** — the same screen built with UniRx, including the recommended `Action` bridge for commands (UniRx's `ReactiveCommand` is not an `ICommand`, so buttons do not auto-disable — the demo documents the difference inline).
+
+Each sample is self-contained: open `Demo.unity` and press Play.
+
 ## Bindings reference
 
 All Bindery bindings derive from Unity's `CustomBinding` and share the same lifecycle:
 
 - The data source is resolved **hierarchically**: the binding walks up the visual tree to the nearest ancestor with a `dataSource` set.
 - Until a data source appears, the binding reports `Pending` and retries; no errors are spammed while your scene is still loading.
+- Once bound, updates are **event-driven** — the binding stops per-frame polling and reacts only to change notifications.
 - On a configuration mistake (missing attribute, unknown member, wrong property type) the binding logs **one** clear error and reports `Failure`.
 - All event subscriptions are released in `OnDeactivated` (element detached or binding cleared).
 - If the data source is replaced at runtime, the binding tears down and re-binds against the new source automatically.
@@ -222,6 +232,7 @@ Behavior notes:
 
 - Formatting always uses `InvariantCulture`, so output does not vary with the OS locale.
 - The target property must be assignable from `string`; binding to a non-string property is a `Failure` with an explanatory error.
+- A bad format string fails the binding with **one** logged error instead of throwing into whatever gameplay code changed the value.
 
 ### MultiBinding
 
@@ -250,7 +261,7 @@ Behavior notes:
 
 - The result is recomputed whenever **any** of the listed sources raises a change notification.
 - The value buffer is reused across updates, so per-change allocation is avoided.
-- Same `InvariantCulture` and string-target rules as `FormatBinding`.
+- Same `InvariantCulture`, string-target, and format-error rules as `FormatBinding`.
 
 ### ClickBinding
 
@@ -285,10 +296,10 @@ For each `[BindableObject]` class, the generator emits a partial class containin
 
 ```csharp
 // <auto-generated/>
-public partial class BindingTestData
+partial class CounterViewModel
 {
     // Registers the property bag once per type.
-    private static readonly bool _s_propertyBagInit = RegisterPropertyBag_BindingTestData();
+    private static readonly bool _s_propertyBagInit = RegisterPropertyBag_CounterViewModel();
 
     // Optional hook: implement this in your own partial to react to changes.
     partial void OnSliderValueChanged(float newValue);
@@ -299,21 +310,23 @@ public partial class BindingTestData
         Track(SliderValue); // disposed together with the object
         Track(SliderValue.Skip(1).Subscribe(v =>
         {
-            Notify("SliderValue");
             OnSliderValueChanged(v);
+            Notify("SliderValue");
         }));
         // ...one block per [BindableProperty] field
     }
 
     // Unity.Properties property bag: native bindings read and write
     // ReactiveProperty.Value directly, no reflection involved.
-    sealed class BindingTestDataPropertyBag : ContainerPropertyBag<BindingTestData> { /* ... */ }
+    sealed class CounterViewModelPropertyBag : ContainerPropertyBag<CounterViewModel> { /* ... */ }
 }
 ```
 
-The `partial void On<Name>Changed(T newValue)` hook is free to implement or ignore; if you do not implement it, the compiler erases the call entirely. `Skip(1)` suppresses the initial emission that `ReactiveProperty` fires on subscribe, so you are only notified about actual changes.
+The `partial void On<Name>Changed(T newValue)` hook is free to implement or ignore; if you do not implement it, the compiler erases the call entirely. The hook runs **before** the change notification, so any derived state you update inside it is already consistent when bindings read the object. `Skip(1)` suppresses the initial emission that `ReactiveProperty` fires on subscribe, so you are only notified about actual changes.
 
 Property names are the PascalCase form of the field name: `_sliderValue`, `sliderValue`, and `SliderValue` all bind as `SliderValue` in UXML.
+
+Inheritance is supported: `[BindableProperty]` fields declared on base classes are included in the derived class's property bag automatically (they must be protected or public — see BG0005), and change notifications are wired exactly once per field across the hierarchy.
 
 > **Warning: assign `[BindableProperty]` fields with field initializers, not in the constructor.**
 >
@@ -338,6 +351,7 @@ The source generator reports these diagnostics at compile time:
 | BG0002 | Error    | The class is marked `[BindableObject]` but is not declared `partial`. |
 | BG0003 | Error    | The class is marked `[BindableObject]` but does not inherit from `Bindery.BindableObject`. |
 | BG0004 | Warning  | A `[BindableProperty]` field is not a `ReactiveProperty<T>` and will be ignored. |
+| BG0005 | Warning  | An inherited `[BindableProperty]` field is private, so it cannot be included in the derived class's property bag. Make it protected or public. |
 
 ## Disposal
 
@@ -368,10 +382,28 @@ private void OnDestroy()
 ## Performance
 
 - The generated `ContainerPropertyBag` means Unity's **native** bindings (`ui:DataBinding` and anything else going through `Unity.Properties`) read and write your properties with zero reflection.
-- Bindery's custom bindings (`FormatBinding`, `MultiBinding`, `ClickBinding`) use reflection **once at setup** to locate members, then compile getter and setter delegates via expression trees for subsequent updates.
-- On IL2CPP / AOT platforms, `Expression.Compile` falls back to an interpreter rather than emitting native code, so the compiled-delegate fast path is a JIT-platform optimization. Custom bindings still work correctly on IL2CPP; they are just not as fast there. Benchmarks are pending.
+- Bindery's custom bindings (`FormatBinding`, `MultiBinding`, `ClickBinding`) use reflection **once at setup** to locate members, then compile getter and setter delegates via expression trees. Compiled delegates are **cached per (type, member)**, so a list of 1,000 items binding the same property compiles two delegates, not two thousand.
+- After setup, Bindery bindings are fully **event-driven** — no per-frame polling.
 
-<!-- TODO: benchmark table (Mono JIT vs IL2CPP, native binding vs FormatBinding vs hand-written) -->
+Measured with the included performance suite (Unity 6, editor, Mono JIT, medians; "manual" is a hand-written `ReactiveProperty.Subscribe` that sets `label.text`, the floor any approach can reach):
+
+| Scenario | Manual | **Bindery `FormatBinding`** | Built-in `ui:DataBinding` |
+|---|---|---|---|
+| 1,000 value changes per frame | 6.6 ms | **14.4 ms** | 16.8 ms |
+| Single change (latency / GC alloc) | 4.7 µs / 36 B | **9.9 µs / 59 B** | — |
+| Attach 1,000 bindings (first frame) | — | **23 ms** | 28 ms |
+| 1,000 idle bindings (per frame) | — | **3.0 ms** | 3.0 ms |
+
+Reading the numbers:
+
+- Under change load Bindery is **faster than Unity's built-in `DataBinding`** and about 2x a hand-written subscription — the cost of declaring the binding in UXML instead of C#.
+- The 36 B/change floor is the formatted string itself; Bindery adds one boxed value (~22 B) on top.
+- Idle cost is **identical to built-in DataBinding** — the ~2 µs/binding/frame floor is UI Toolkit's binding system itself, not Bindery. At very large scales, prefer unbinding fully hidden screens.
+- Fan-out is linear: one property feeding 100 or 1,000 bound elements costs the same ~8.5 µs per element per change.
+
+Reproduce: install `com.unity.test-framework.performance` and R3, then run **Test Runner → PlayMode → Bindery.PerformanceTests** (~20 s).
+
+On IL2CPP / AOT platforms, `Expression.Compile` falls back to an interpreter rather than emitting native code, so per-change costs are higher there than the Mono numbers above. Custom bindings still work correctly on IL2CPP; IL2CPP benchmarks are pending.
 
 ## Comparison
 
@@ -381,7 +413,6 @@ private void OnDestroy()
 | UI elements | Standard UI Toolkit elements | Custom bindable element types | Standard UI Toolkit elements |
 | UI Builder | Fully usable | Limited by custom elements | Fully usable |
 | ViewModel boilerplate | Generated from `ReactiveProperty` fields | Manual, or a paid source generator | Manual (`[CreateProperty]`, `INotifyBindablePropertyChanged`, notify calls) |
-| Maintenance | Active | Largely inactive since 2023 | Maintained by Unity |
 | Formatting / multi-source / commands in UXML | Yes (`FormatBinding`, `MultiBinding`, `ClickBinding`) | Yes (own syntax) | No, write a `CustomBinding` yourself |
 
 UnityMvvmToolkit was a solid solution for its time; it simply targets a Unity that did not yet have a native binding system. If you are on Unity 6, building on the native engine avoids maintaining a parallel infrastructure entirely. And if you are happy writing the `INotifyBindablePropertyChanged` plumbing by hand, raw Unity 6 binding needs no library at all; Bindery just deletes that plumbing.

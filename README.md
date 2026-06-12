@@ -1,4 +1,4 @@
-![Bindery — reactive MVVM data binding for Unity 6 UI Toolkit](Documentation~/images/banner.png)
+![Bindery: reactive MVVM data binding for Unity 6 UI Toolkit](Documentation~/images/banner.png)
 
 # Bindery
 
@@ -12,6 +12,10 @@ WPF-style data binding for Unity 6 UI Toolkit. Source-generated bindable ViewMod
 
 <!-- TODO: hero GIF of slider demo here -->
 <!-- Should show: dragging a slider in Play Mode while a FormatBinding label, a MultiBinding label, and a CanExecute-driven Reset button all update live. -->
+
+## Contents
+
+[Why Bindery](#why-bindery) · [Features](#features) · [Requirements](#requirements) · [Installation](#installation) · [Quick start](#quick-start) · [Samples](#samples) · [Bindings reference](#bindings-reference) · [The generated code](#the-generated-code) · [Diagnostics](#diagnostics) · [Disposal](#disposal) · [Performance](#performance) · [Comparison](#comparison) · [Roadmap](#roadmap)
 
 ## Why Bindery
 
@@ -194,8 +198,8 @@ Note the namespace declaration `xmlns:b="Bindery"` on the root element; that is 
 
 Two importable samples ship with the package (Package Manager → Bindery → Samples):
 
-- **Binding Demo (R3)** — a small "Potion Shop" game screen in proper MVVM shape: `PlayerData` (a plain C# model shared between gameplay and UI — a monster attacks the player on a timer and the HP bar simply follows), `PotionShopViewModel`, and a UXML view. Demonstrates every binding type: TwoWay `ui:DataBinding` (quantity slider), `FormatBinding` (gold, owned counters), `MultiBinding` (HP bar title, total price), `ClickBinding` as `ICommand` with CanExecute auto-disable (Buy, Drink) and as a plain method (Fight), plus the generated `OnQuantityChanged` callback recomputing the total.
-- **Binding Demo (UniRx)** — the same screen built with UniRx, including the recommended `Action` bridge for commands (UniRx's `ReactiveCommand` is not an `ICommand`, so buttons do not auto-disable — the demo documents the difference inline).
+- **Binding Demo (R3)**: a small "Potion Shop" game screen in proper MVVM shape: `PlayerData` (a plain C# model shared between gameplay and UI, where a monster attacks the player on a timer and the HP bar simply follows), `PotionShopViewModel`, and a UXML view. Demonstrates every binding type: TwoWay `ui:DataBinding` (quantity slider), `FormatBinding` (gold, owned counters), `MultiBinding` (HP bar title, total price), `ClickBinding` as `ICommand` with CanExecute auto-disable (Buy, Drink) and as a plain method (Fight), plus the generated `OnQuantityChanged` callback recomputing the total.
+- **Binding Demo (UniRx)**: the same screen built with UniRx, including the recommended `Action` bridge for commands (UniRx's `ReactiveCommand` is not an `ICommand`, so buttons do not auto-disable; the demo documents the difference inline).
 
 Each sample is self-contained: open `Demo.unity` and press Play.
 
@@ -205,7 +209,7 @@ All Bindery bindings derive from Unity's `CustomBinding` and share the same life
 
 - The data source is resolved **hierarchically**: the binding walks up the visual tree to the nearest ancestor with a `dataSource` set.
 - Until a data source appears, the binding reports `Pending` and retries; no errors are spammed while your scene is still loading.
-- Once bound, updates are **event-driven** — the binding stops per-frame polling and reacts only to change notifications.
+- Once bound, updates are **event-driven**: the binding stops per-frame polling and reacts only to change notifications.
 - On a configuration mistake (missing attribute, unknown member, wrong property type) the binding logs **one** clear error and reports `Failure`.
 - All event subscriptions are released in `OnDeactivated` (element detached or binding cleared).
 - If the data source is replaced at runtime, the binding tears down and re-binds against the new source automatically.
@@ -326,7 +330,7 @@ The `partial void On<Name>Changed(T newValue)` hook is free to implement or igno
 
 Property names are the PascalCase form of the field name: `_sliderValue`, `sliderValue`, and `SliderValue` all bind as `SliderValue` in UXML.
 
-Inheritance is supported: `[BindableProperty]` fields declared on base classes are included in the derived class's property bag automatically (they must be protected or public — see BG0005), and change notifications are wired exactly once per field across the hierarchy.
+Inheritance is supported: `[BindableProperty]` fields declared on base classes are included in the derived class's property bag automatically (they must be protected or public, see BG0005), and change notifications are wired exactly once per field across the hierarchy.
 
 > **Warning: assign `[BindableProperty]` fields with field initializers, not in the constructor.**
 >
@@ -383,22 +387,22 @@ private void OnDestroy()
 
 - The generated `ContainerPropertyBag` means Unity's **native** bindings (`ui:DataBinding` and anything else going through `Unity.Properties`) read and write your properties with zero reflection.
 - Bindery's custom bindings (`FormatBinding`, `MultiBinding`, `ClickBinding`) use reflection **once at setup** to locate members, then compile getter and setter delegates via expression trees. Compiled delegates are **cached per (type, member)**, so a list of 1,000 items binding the same property compiles two delegates, not two thousand.
-- After setup, Bindery bindings are fully **event-driven** — no per-frame polling.
+- After setup, Bindery bindings are fully **event-driven**: no per-frame polling.
 
 Measured with the included performance suite (Unity 6, editor, Mono JIT, medians; "manual" is a hand-written `ReactiveProperty.Subscribe` that sets `label.text`, the floor any approach can reach):
 
 | Scenario | Manual | **Bindery `FormatBinding`** | Built-in `ui:DataBinding` |
 |---|---|---|---|
 | 1,000 value changes per frame | 6.6 ms | **14.4 ms** | 16.8 ms |
-| Single change (latency / GC alloc) | 4.7 µs / 36 B | **9.9 µs / 59 B** | — |
-| Attach 1,000 bindings (first frame) | — | **23 ms** | 28 ms |
-| 1,000 idle bindings (per frame) | — | **3.0 ms** | 3.0 ms |
+| Single change (latency / GC alloc) | 4.7 µs / 36 B | **9.9 µs / 59 B** | n/a |
+| Attach 1,000 bindings (first frame) | n/a | **23 ms** | 28 ms |
+| 1,000 idle bindings (per frame) | n/a | **3.0 ms** | 3.0 ms |
 
 Reading the numbers:
 
-- Under change load Bindery is **faster than Unity's built-in `DataBinding`** and about 2x a hand-written subscription — the cost of declaring the binding in UXML instead of C#.
+- Under change load Bindery is **faster than Unity's built-in `DataBinding`** and about 2x a hand-written subscription, the cost of declaring the binding in UXML instead of C#.
 - The 36 B/change floor is the formatted string itself; Bindery adds one boxed value (~22 B) on top.
-- Idle cost is **identical to built-in DataBinding** — the ~2 µs/binding/frame floor is UI Toolkit's binding system itself, not Bindery. At very large scales, prefer unbinding fully hidden screens.
+- Idle cost is **identical to built-in DataBinding**: the ~2 µs/binding/frame floor is UI Toolkit's binding system itself, not Bindery. At very large scales, prefer unbinding fully hidden screens.
 - Fan-out is linear: one property feeding 100 or 1,000 bound elements costs the same ~8.5 µs per element per change.
 
 Reproduce: install `com.unity.test-framework.performance` and R3, then run **Test Runner → PlayMode → Bindery.PerformanceTests** (~20 s).

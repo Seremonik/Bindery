@@ -62,9 +62,20 @@ public class BindingPerformanceTests
         catch (Exception) { /* already registered in this session */ }
     }
 
+    private int _savedVSync;
+    private int _savedTargetFrameRate;
+
     [UnitySetUp]
     public IEnumerator UnitySetUp()
     {
+        // FrameTime measurements are meaningless under VSync: every frame is
+        // pinned to the refresh interval (e.g. 8.33 ms at 120 Hz) and the actual
+        // binding work disappears under the wait. Disable it for the run.
+        _savedVSync           = QualitySettings.vSyncCount;
+        _savedTargetFrameRate = Application.targetFrameRate;
+        QualitySettings.vSyncCount   = 0;
+        Application.targetFrameRate  = -1;
+
         _panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
         _go  = new GameObject("BinderyPerf");
         _doc = _go.AddComponent<UIDocument>();
@@ -83,6 +94,9 @@ public class BindingPerformanceTests
         _manualSubscriptions.Clear();
         UnityEngine.Object.Destroy(_go);
         UnityEngine.Object.Destroy(_panelSettings);
+
+        QualitySettings.vSyncCount  = _savedVSync;
+        Application.targetFrameRate = _savedTargetFrameRate;
     }
 
     // ------------------------------------------------------------------ helpers

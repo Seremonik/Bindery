@@ -15,7 +15,19 @@ WPF-style data binding for Unity 6 UI Toolkit. Source-generated bindable ViewMod
 
 ## Contents
 
-[Why Bindery](#why-bindery) · [Features](#features) · [Requirements](#requirements) · [Installation](#installation) · [Quick start](#quick-start) · [Samples](#samples) · [Bindings reference](#bindings-reference) · [The generated code](#the-generated-code) · [Diagnostics](#diagnostics) · [Disposal](#disposal) · [Performance](#performance) · [Comparison](#comparison) · [Roadmap](#roadmap)
+- [Why Bindery](#why-bindery)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Samples](#samples)
+- [Bindings reference](#bindings-reference)
+- [The generated code](#the-generated-code)
+- [Diagnostics](#diagnostics)
+- [Disposal and Track](#disposal-and-track)
+- [Performance](#performance)
+- [Comparison](#comparison)
+- [Roadmap](#roadmap)
 
 ## Why Bindery
 
@@ -357,11 +369,26 @@ The source generator reports these diagnostics at compile time:
 | BG0004 | Warning  | A `[BindableProperty]` field is not a `ReactiveProperty<T>` and will be ignored. |
 | BG0005 | Warning  | An inherited `[BindableProperty]` field is private, so it cannot be included in the derived class's property bag. Make it protected or public. |
 
-## Disposal
+## Disposal and Track
 
-`BindableObject` implements `IDisposable`. Disposing it disposes everything the generated code tracked: each `ReactiveProperty` field and each change-notification subscription. Disposal is idempotent.
+`BindableObject` implements `IDisposable` and keeps an internal list of disposables. The protected `Track(IDisposable)` method adds to that list; everything tracked is disposed together with the object, exactly once, when you call `Dispose()`. Disposal is idempotent.
 
-If your ViewModel creates extra disposables (commands built in the constructor, derived observables), either pass them to `Track(...)` or override `Dispose(bool)`:
+The generated code already tracks each `[BindableProperty]` field and its change-notification subscription, so those need nothing from you. For anything you create yourself in the constructor (commands, command-handler subscriptions, model mirrors), call `Track`:
+
+```csharp
+public ShopViewModel(PlayerData player)
+{
+    BuyCommand = Total.CombineLatest(Gold, PlayerData.CanBuy).ToReactiveCommand();
+
+    Track(BuyCommand);                                            // dispose the command with the ViewModel
+    Track(BuyCommand.Subscribe(_ => player.BuyPotions(1)));      // ...and its handler subscription
+    Track(player.Gold.Subscribe(gold => Gold.Value = gold));     // ...and any model-to-VM mirror
+}
+```
+
+**`Track` takes ownership**: the ViewModel disposes whatever you hand it. Never pass disposables that must outlive the ViewModel, such as ReactiveProperties owned by a shared model; track your *subscription* to them instead, as the mirror line above does. The same rule is why `[BindableProperty]` fields should be ReactiveProperties the ViewModel itself creates.
+
+If you prefer explicit cleanup over `Track`, override `Dispose(bool)`:
 
 ```csharp
 protected override void Dispose(bool disposing)
